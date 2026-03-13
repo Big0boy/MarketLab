@@ -1,0 +1,50 @@
+simulation:
+  steps:         1000
+  random_seed:   125487
+  starting_cash: 10000.0
+
+
+stocks:
+  - symbol:            AAPL
+    start_price:       150.0
+    fundamental_value: 145.0
+    volatility:        0.02
+
+  - symbol:            GOOGL
+    start_price:       130.0
+    fundamental_value: 128.0
+    volatility:        0.025
+
+  - symbol:            MSFT
+    start_price:       310.0
+    fundamental_value: 305.0
+    volatility:        0.018
+
+market:
+  slippage_factor:      0.0001
+  news_shock_std:       0.0005
+  circuit_breaker_pct:  0.10
+  bankruptcy_threshold: 100.0
+
+agents:
+  fundamentalist:
+    count:          12
+    buy_threshold:  0.95
+    sell_threshold: 1.05
+    risk_aversion:  1.0
+
+  chartist:
+    count:         12
+    lookback:       5
+    risk_aversion:  1.2
+
+  noise:
+    count:         16
+    hold_prob:     0.70
+    buy_prob:      0.15
+    risk_aversion: 2.0
+
+  market_maker:
+    count:         10
+    spread_pct:    0.02
+    risk_aversion: 0.5

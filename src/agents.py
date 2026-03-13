@@ -1,5 +1,5 @@
-import random
 from __future__ import annotations
+import random
 from typing import TYPE_CHECKING
 from models import Order, OrderType, AgentType
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 class BaseAgent:
 
-    agent_type: AgentType = AgentType.BASE  # subclasses override this
+    agent_type: AgentType = AgentType.Base
 
     def __init__(self, agent_id: int, initial_cash: float = 10000.0):
         self.agent_id       = agent_id

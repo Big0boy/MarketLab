@@ -90,6 +90,8 @@ class Exchange:
 
     def _apply_news_shock(self) -> None:
         for stock in self.order_book.stocks.values():
+            if random.random() >0.02:
+                continue
             shock = random.gauss(0, 0.001)       
             stock.fundamental_value *= (1 + shock)
 
