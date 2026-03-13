@@ -6,6 +6,18 @@ class OrderType(Enum):
     BUY  = "BUY"
     SELL = "SELL"
 
+class AgentType(Enum):
+    Base = "base"
+    FUNDAMENTALIST = "fundamentalist"
+    CHARTIST = "chartist"
+    NOISE = "noise"
+    MARKET_MAKER = "market_maker"
+    Q_LEARNER = "q_learner"      
+    MOMENTUM = "momentum"        
+    MEAN_REVERSION = "mean_reversion"
+    HERD = "herd"
+    ARBITRAGE = "arbitrage" 
+
 
 @dataclass
 class Order:
