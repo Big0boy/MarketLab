@@ -15,8 +15,7 @@ def run_simulation() -> Simulation:
     sim = Simulation("config.yaml")
     sim.run()
     results = sim.get_results()
-    print(f"  Trades:    {results['total_trades']}")
-    print(f"  Survivors: {len(results['survivors'])}")
+    print(results)
     print("=" * 50)
     return sim
 

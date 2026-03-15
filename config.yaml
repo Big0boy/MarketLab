@@ -1,8 +1,7 @@
 simulation:
-  steps:         1000
-  random_seed:   125487
-  starting_cash: 10000.0
-
+  steps:         100000
+  random_seed:   21102007
+  starting_cash: 5000.0
 
 stocks:
   - symbol:            AAPL
@@ -28,9 +27,9 @@ market:
 
 agents:
   fundamentalist:
-    count:          12
-    buy_threshold:  0.95
-    sell_threshold: 1.05
+    count:          120
+    buy_threshold:  0.98  
+    sell_threshold: 1.02   
     risk_aversion:  1.0
 
   chartist:
@@ -40,11 +39,11 @@ agents:
 
   noise:
     count:         16
-    hold_prob:     0.70
-    buy_prob:      0.15
+    hold_prob:     0.40    
+    buy_prob:      0.30    
     risk_aversion: 2.0
 
   market_maker:
     count:         10
-    spread_pct:    0.02
+    spread_pct:    0.004   
     risk_aversion: 0.5

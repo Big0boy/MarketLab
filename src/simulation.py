@@ -62,7 +62,6 @@ class Simulation():
            "bankruptcies":   {agent.agent_id for agent in self.bankrupt_agents},
            "winner":         max(self.agents, key=lambda a: a.get_total_wealth(self.exchange)).agent_id,
            "final_prices":   {sym: stock.price for sym, stock in self.exchange.order_book.stocks.items()},
-           "price_history":  {sym: stock.price_history for sym, stock in self.exchange.order_book.stocks.items()}
         }
     
     def get_agent_rankings(self) -> list:

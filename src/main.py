@@ -1,5 +1,5 @@
 from simulation import Simulation
-
+import validate as v
 
 def save_output(sim):
     results  = sim.get_results()
@@ -31,8 +31,7 @@ def save_output(sim):
             for agent_id in results["bankruptcies"]:
                 f.write(f"  Agent {agent_id}\n")
 
-        f.write("\n trade_log\n")
-        f.write(f"{sim.get_trade_log()}\n")
+        
 
 
     print("Results saved to output.txt ✅")
@@ -46,7 +45,11 @@ def main():
     print(f"  Steps:   {sim.num_steps}")
 
     sim.run()
-    save_output(sim)      # ← call here
+    save_output(sim)
+    data = v.extract_data(sim, symbol="AAPL")
+    s    = v.compute_stats(data)
+    v.print_report(s)
+    v.plot_charts(data, s)
 
 
 if __name__ == "__main__":

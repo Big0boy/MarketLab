@@ -16,6 +16,7 @@ def build_stocks(config: dict) -> list[Stock]:
             symbol            = s["symbol"],
             price             = s["start_price"],
             fundamental_value = s["fundamental_value"],
+            initial_fundamental = s["fundamental_value"],
             volatility        = s["volatility"],
         )
         # seed price history so chartists have data immediately
