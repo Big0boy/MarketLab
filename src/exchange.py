@@ -7,16 +7,18 @@ from cda import CDA
 
 class Exchange:
 
-    def __init__(self, stocks: list[models.Stock], slippage_factor: float = 0.0001):
-        self.order_book = OrderBook()
-        self.cda        = CDA(self.order_book, slippage_factor)
+    def __init__(self, stocks: list[models.Stock],
+                 slippage_factor: float = 0.0001,
+                 max_short: int = 100):
+        self.order_book  = OrderBook()
+        self.cda         = CDA(self.order_book, slippage_factor)
+        self.max_short   = max_short
+        self.agents      = {}
+        self.trade_log   = []
+        self.step        = 0
 
         for stock in stocks:
             self.order_book.stocks[stock.symbol] = stock
-
-        self.agents    = {}
-        self.trade_log = []
-        self.step      = 0
 
     def register_agent(self, agent) -> None:
         self.agents[agent.agent_id] = agent
@@ -24,51 +26,100 @@ class Exchange:
     def submit_order(self, order: models.Order) -> None:
         agent = self.agents.get(order.agent_id)
         if not agent:
-            print(f"Agent {order.agent_id} not found.")
             return
-
         if order.quantity <= 0 or order.price <= 0:
-            print(f"Agent {order.agent_id} placed invalid order (qty/price <= 0).")
             return
 
         if order.order_type == OrderType.BUY:
             if agent.cash >= order.price * order.quantity:
                 self.order_book.add_order(order)
-            else:
-                print(f"Agent {order.agent_id} has insufficient cash.")
 
         elif order.order_type == OrderType.SELL:
-            if agent.holdings.get(order.symbol, 0) >= order.quantity:
+            if agent.holdings.get(order.symbol, 0) - order.quantity >= -self.max_short:
                 self.order_book.add_order(order)
-            else:
-                print(f"Agent {order.agent_id} has insufficient holdings.")
 
     def run_step(self) -> list[models.Trade]:
         trades = self.cda.run_auction(self.step)
         for trade in trades:
             self._settle_trade(trade)
-        self._apply_news_shock()
+        self._apply_shock()
+        self._check_margin_calls()
         for symbol in list(self.order_book.stocks.keys()):
             self._check_circuit_breaker(symbol)
 
+        for stock in self.order_book.stocks.values():
+            stock.price_history.append(round(stock.price, 4))
+
         self.order_book.clear()
-
         self.step += 1
-
         return trades
 
     def _settle_trade(self, trade: models.Trade) -> None:
         buyer  = self.agents[trade.buyer_id]
         seller = self.agents[trade.seller_id]
         total_cost = trade.price * trade.quantity
+        fee        = 0.0005 * total_cost
 
-        buyer.cash                          -= total_cost
-        buyer.holdings[trade.symbol]         = buyer.holdings.get(trade.symbol, 0) + trade.quantity
+        buyer.cash                   -= total_cost + fee
+        buyer.holdings[trade.symbol]  = buyer.holdings.get(trade.symbol, 0) + trade.quantity
 
-        seller.cash                         += total_cost
-        seller.holdings[trade.symbol]        = seller.holdings.get(trade.symbol, 0) - trade.quantity
+        seller.cash                  += total_cost - fee
+        seller.holdings[trade.symbol] = seller.holdings.get(trade.symbol, 0) - trade.quantity
 
         self.trade_log.append(trade)
+
+    def _check_margin_calls(self) -> None:
+        for agent in list(self.agents.values()):
+            if agent.cash < 0:
+                for symbol, qty in list(agent.holdings.items()):
+                    if qty < 0:
+                        stock = self.order_book.stocks.get(symbol)
+                        if stock:
+                            agent.cash           -= abs(qty) * stock.price
+                            agent.holdings[symbol] = 0
+
+    def _apply_shock(self) -> None:
+        for stock in self.order_book.stocks.values():
+
+            
+            shock     = random.gauss(0, 0.002)
+            long_term = stock.initial_fundamental
+            reversion = 0.001 * (long_term - stock.fundamental_value)
+            stock.fundamental_value *= (1 + shock + reversion)
+            stock.fundamental_value  = max(stock.fundamental_value, 0.01)
+
+            
+            stock.sediment = 0.95 * stock.sediment + shock * 0.1
+
+            
+            if not hasattr(stock, '_turb'):
+                stock._turb = 0
+            if stock._turb > 0:
+                stock._turb -= 1
+
+            vol_scale    = 0.15 + (stock._turb / 50) * 0.45
+            stock.price *= (1 + random.gauss(0, stock.volatility * vol_scale))
+
+            gap          = (stock.fundamental_value - stock.price) / stock.price
+            stock.price *= (1 + 0.01 * gap)
+            stock.price  = max(stock.price, 0.01)
+
+            if random.random() < 0.02:
+                news         = random.gauss(0, stock.volatility * 0.5)
+                stock.price *= (1 + news)
+                stock._turb  = 50 
+
+    def _check_circuit_breaker(self, symbol: str) -> None:
+        stock = self.order_book.stocks.get(symbol)
+        if not stock or not stock.price_history:
+            return
+        last_price = stock.price_history[-1]
+        if last_price == 0:
+            return
+        change = abs(stock.price - last_price) / last_price
+        if change > 0.10:
+            self.order_book.bids.pop(symbol, None)
+            self.order_book.asks.pop(symbol, None)
 
     def get_price(self, symbol: str) -> float | None:
         mid   = self.cda.calculate_price(symbol)
@@ -87,28 +138,6 @@ class Exchange:
 
     def get_spread(self, symbol: str) -> float | None:
         return self.order_book.get_spread(symbol)
-
-    def _apply_news_shock(self) -> None:
-        for stock in self.order_book.stocks.values():
-            shock = random.gauss(0, 0.001)       
-            stock.fundamental_value *= (1 + shock)
-
-    def _check_circuit_breaker(self, symbol: str) -> None:
-        stock = self.order_book.stocks.get(symbol)
-        if not stock or not stock.price_history:
-            return
-
-        last_price = stock.price_history[-1]            
-        if last_price == 0:
-            return
-
-        change = abs(stock.price - last_price) / last_price
-
-        if change > 0.10:                               
-            self.order_book.bids.pop(symbol, None)      
-            self.order_book.asks.pop(symbol, None)      
-            print(f"Circuit breaker triggered for {symbol} "
-                  f"at step {self.step} — price change: {change:.2%}")
 
     def get_trade_log(self) -> list[models.Trade]:
         return self.trade_log

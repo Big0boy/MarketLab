@@ -43,7 +43,9 @@ class Trade:
 class Stock:
     symbol:            str
     price:             float          
-    fundamental_value: float          
+    fundamental_value: float 
+    initial_fundamental: float         
     volatility:        float          
     price_history:     list = field(default_factory=list)   
+    sediment:          float = 0.0
     step:              int  = 0       
