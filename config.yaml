@@ -1,6 +1,6 @@
 simulation:
   steps:         10000
-  random_seed:   21102007
+  random_seed:   2007
   starting_cash: 50000.0
 
 stocks:

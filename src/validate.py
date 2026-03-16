@@ -125,10 +125,11 @@ def style_ax(ax, title: str) -> None:
         spine.set_edgecolor("#30363D")
 
 
-def plot_charts(data: dict, s: dict) -> None:
+def plot_charts(data: dict, s: dict, generation: int = 0) -> None:
     fig = plt.figure(figsize=(16, 10))
     fig.patch.set_facecolor(BG)
-    fig.suptitle("MarketLab — Stylized Facts Validation",
+    gen_label = f" — Generation {generation}" if generation else ""
+    fig.suptitle(f"MarketLab — Stylized Facts Validation{gen_label}",
                  color=WHITE, fontsize=14, fontweight="bold", y=0.98)
 
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.45, wspace=0.35)
@@ -214,12 +215,11 @@ def plot_charts(data: dict, s: dict) -> None:
                  transform=ax4.transAxes, color=MUTED,
                  ha="center", va="center")
 
-    plt.savefig("stylized_facts.png", dpi=150,
-                bbox_inches="tight", facecolor=BG)
-    print("  Chart saved → stylized_facts.png")
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
+    gen_suffix = f"_gen{generation}" if generation else ""
+    filename   = f"stylized_facts_{symbol}{gen_suffix}.png"
+    plt.savefig(filename, dpi=150, bbox_inches="tight", facecolor=BG)
+    plt.close(fig)
+    print(f"  Chart saved → {filename}")
 
 def main():
     sim  = run_simulation()

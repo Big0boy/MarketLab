@@ -17,6 +17,8 @@ class BaseAgent:
         self.holdings       = {}
         self.trade_history  = []
         self.wealth_history = []
+        self.raw_fitness = 0
+        self.fitness = 0
 
     def decide(self, exchange: Exchange) -> Order | None:
         return None

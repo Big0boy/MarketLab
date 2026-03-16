@@ -25,7 +25,6 @@ class CDA:
         elif order_type == OrderType.SELL:
             stock.price = stock.price * (1 - impact)    # selling pushes price DOWN
 
-        stock.price_history.append(round(stock.price, 4))
 
     def _handle_partial_fills(self, bid: models.Order, ask: models.Order, trade_quantity: int) -> None:
         if bid.quantity > ask.quantity:
