@@ -4,6 +4,10 @@ import models
 from models import Stock
 
 
+def vary(value: float, pct: float = 0.10) -> float:
+    return value * random.uniform(1 - pct, 1 + pct)
+
+
 def load_config(path: str = "config.yaml") -> dict:
     with open(path, "r") as f:
         return yaml.safe_load(f)
@@ -35,10 +39,7 @@ def build_agents(config: dict) -> list:
     cash     = config["simulation"]["starting_cash"]
     stocks   = [s["symbol"] for s in config["stocks"]]
 
-    # helper — split cash: half as cash, half as holdings
     def starting_holdings(cash: float, symbols: list) -> dict:
-        # give each agent shares worth ~half their cash
-        # split evenly across all stocks
         per_stock_value = (cash * 0.5) / len(symbols)
         holdings = {}
         for s in config["stocks"]:
@@ -50,10 +51,10 @@ def build_agents(config: dict) -> list:
     for _ in range(f["count"]):
         agent = FundamentalistAgent(
             agent_id       = agent_id,
-            initial_cash   = cash * 0.5,       # ← half cash
-            buy_threshold  = f["buy_threshold"],
-            sell_threshold = f["sell_threshold"],
-            risk_aversion  = f["risk_aversion"],
+            initial_cash   = cash * 0.5,
+            buy_threshold  = vary(f["buy_threshold"]),
+            sell_threshold = vary(f["sell_threshold"]),
+            risk_aversion  = vary(f["risk_aversion"]),
         )
         agent.holdings = starting_holdings(cash, stocks)  # ← half as shares
         agents.append(agent)
@@ -64,8 +65,8 @@ def build_agents(config: dict) -> list:
         agent = ChartistAgent(
             agent_id      = agent_id,
             initial_cash  = cash * 0.5,
-            lookback      = c["lookback"],
-            risk_aversion = c["risk_aversion"],
+            lookback      = max(2, int(vary(c["lookback"], pct=0.30))),
+            risk_aversion = vary(c["risk_aversion"]),
         )
         agent.holdings = starting_holdings(cash, stocks)
         agents.append(agent)
@@ -76,9 +77,9 @@ def build_agents(config: dict) -> list:
         agent = NoiseAgent(
             agent_id      = agent_id,
             initial_cash  = cash * 0.5,
-            hold_prob     = n["hold_prob"],
-            buy_prob      = n["buy_prob"],
-            risk_aversion = n["risk_aversion"],
+            hold_prob     = min(vary(n["hold_prob"]), 0.95),
+            buy_prob      = vary(n["buy_prob"]),
+            risk_aversion = vary(n["risk_aversion"]),
         )
         agent.holdings = starting_holdings(cash, stocks)
         agents.append(agent)
@@ -89,8 +90,8 @@ def build_agents(config: dict) -> list:
         agent = MarketMakerAgent(
             agent_id      = agent_id,
             initial_cash  = cash * 0.5,
-            spread_pct    = m["spread_pct"],
-            risk_aversion = m["risk_aversion"],
+            spread_pct    = vary(m["spread_pct"]),
+            risk_aversion = vary(m["risk_aversion"]),
         )
         agent.holdings = starting_holdings(cash, stocks)
         agents.append(agent)

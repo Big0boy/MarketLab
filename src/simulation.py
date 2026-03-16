@@ -28,7 +28,7 @@ class Simulation():
         pass
         
     def _step(self) -> None:
-        self.bankrupt_agents : list[models.Agent] = []
+        self.bankrupt_agents : list = []
         for agent in self.agents:
             if agent.is_bankrupt(self.exchange):
                 self.log.append(f"Agent {agent.agent_id} went bankrupt at step {self.step}.")
