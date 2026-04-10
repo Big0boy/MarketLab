@@ -1,6 +1,6 @@
 simulation:
   steps:         10000
-  random_seed:   2007
+  random_seed:   696969
   starting_cash: 50000.0
 
 stocks:
@@ -46,3 +46,25 @@ agents:
     count:         10
     spread_pct:    0.004   
     risk_aversion: 0.5
+
+  momentum:
+    count: 8
+    lookback: 10
+    threshold: 0.005
+    risk_aversion: 1.5
+
+  mean_reversion:
+    count: 8
+    lookback: 20
+    entry_z: 0.01
+    risk_aversion: 1.2
+
+  herd:
+    count: 6
+    sensitivity: 1.0
+    risk_aversion: 1.8
+
+  arbitrage:
+    count: 6
+    threshold: 0.01
+    risk_aversion: 0.8

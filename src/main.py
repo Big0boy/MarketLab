@@ -92,7 +92,7 @@ def run_evolution(generations: int = 5) -> None:
 
 
 def main():
-    run_evolution()
+    run_evolution(5)
 
 
 if __name__ == "__main__":

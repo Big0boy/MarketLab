@@ -31,7 +31,9 @@ def build_stocks(config: dict) -> list[Stock]:
 
 def build_agents(config: dict) -> list:
     from agents import (FundamentalistAgent, ChartistAgent,
-                        NoiseAgent, MarketMakerAgent)
+                        NoiseAgent, MarketMakerAgent,
+                        MomentumAgent, MeanReversionAgent,
+                        HerdAgent, ArbitrageAgent)
 
     agents   = []
     agent_id = 0
@@ -92,6 +94,57 @@ def build_agents(config: dict) -> list:
             initial_cash  = cash * 0.5,
             spread_pct    = vary(m["spread_pct"]),
             risk_aversion = vary(m["risk_aversion"]),
+        )
+        agent.holdings = starting_holdings(cash, stocks)
+        agents.append(agent)
+        agent_id += 1
+
+    mo = cfg["momentum"]
+    for _ in range(mo["count"]):
+        agent = MomentumAgent(
+            agent_id      = agent_id,
+            initial_cash  = cash * 0.5,
+            lookback      = max(2, int(vary(mo["lookback"], pct=0.30))),
+            threshold     = vary(mo["threshold"]),
+            risk_aversion = vary(mo["risk_aversion"]),
+        )
+        agent.holdings = starting_holdings(cash, stocks)
+        agents.append(agent)
+        agent_id += 1
+
+    mr = cfg["mean_reversion"]
+    for _ in range(mr["count"]):
+        agent = MeanReversionAgent(
+            agent_id      = agent_id,
+            initial_cash  = cash * 0.5,
+            lookback      = max(5, int(vary(mr["lookback"], pct=0.30))),
+            entry_z       = vary(mr["entry_z"]),
+            risk_aversion = vary(mr["risk_aversion"]),
+        )
+        agent.holdings = starting_holdings(cash, stocks)
+        agents.append(agent)
+        agent_id += 1
+
+    h = cfg["herd"]
+    for _ in range(h["count"]):
+        agent = HerdAgent(
+            agent_id      = agent_id,
+            initial_cash  = cash * 0.5,
+            sensitivity   = vary(h["sensitivity"]),
+            risk_aversion = vary(h["risk_aversion"]),
+        )
+        agent.holdings = starting_holdings(cash, stocks)
+        agents.append(agent)
+        agent_id += 1
+
+    ar = cfg["arbitrage"]
+    for _ in range(ar["count"]):
+        agent = ArbitrageAgent(
+            agent_id      = agent_id,
+            initial_cash  = cash * 0.5,
+            lookback      = max(10, int(vary(ar.get("lookback", 30), pct=0.30))),
+            threshold     = vary(ar.get("threshold", 1.5)),
+            risk_aversion = vary(ar["risk_aversion"]),
         )
         agent.holdings = starting_holdings(cash, stocks)
         agents.append(agent)
