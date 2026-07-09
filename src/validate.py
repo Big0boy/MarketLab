@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -27,7 +28,8 @@ def extract_data(sim: Simulation, symbol: str = "AAPL") -> dict:
     returns     = np.diff(prices) / prices[:-1]
     returns     = returns[returns != 0]
     abs_returns = np.abs(returns)
-    trade_sizes = np.array([t.quantity for t in sim.exchange.trade_log])
+    trade_sizes = np.array([t.quantity for t in sim.exchange.trade_log
+                             if t.symbol == symbol])
 
     print(f"\n  Symbol:      {symbol}")
     print(f"  Price steps: {len(prices)}")
@@ -215,8 +217,9 @@ def plot_charts(data: dict, s: dict, generation: int = 0) -> None:
                  transform=ax4.transAxes, color=MUTED,
                  ha="center", va="center")
 
+    os.makedirs("outputs", exist_ok=True)
     gen_suffix = f"_gen{generation}" if generation else ""
-    filename   = f"stylized_facts_{symbol}{gen_suffix}.png"
+    filename   = f"outputs/stylized_facts_{symbol}{gen_suffix}.png"
     plt.savefig(filename, dpi=150, bbox_inches="tight", facecolor=BG)
     plt.close(fig)
     print(f"  Chart saved → {filename}")

@@ -1,3 +1,4 @@
+import os
 from simulation import Simulation
 import evolution as evo
 import validate as v
@@ -7,6 +8,7 @@ CONFIG = "config.yaml"
 
 
 def save_output(sim: Simulation, generation: int = 0) -> None:
+    os.makedirs("outputs", exist_ok=True)
     results  = sim.get_results()
     rankings = sim.get_agent_rankings()
     seed     = sim.config["simulation"]["random_seed"]
@@ -92,7 +94,7 @@ def run_evolution(generations: int = 5) -> None:
 
 
 def main():
-    run_evolution(5)
+    run_once()
 
 
 if __name__ == "__main__":

@@ -18,8 +18,16 @@ class Simulation:
         self.all_bankrupt_ids = set()   
         self.bankrupt_agents  = []    
         self.stocks           = build_stocks(self.config)
-        self.agents           = agents if agents is not None else build_agents(self.config)
-        self.exchange         = Exchange(self.stocks)
+        self.agents           = agents if agents is not None else build_agents(self.config, self.stocks)
+        max_short_pct         = self.config["simulation"].get("max_short_pct", 0.10)
+        intraday_steps        = self.config["simulation"].get("intraday_steps", 390)
+        holding_bonus_rate    = self.config["simulation"].get("holding_bonus_rate", 0.0002)
+        holding_bonus_interval = self.config["simulation"].get("holding_bonus_interval", 30)
+        self.exchange         = Exchange(self.stocks,
+                                         max_short_pct=max_short_pct,
+                                         intraday_steps=intraday_steps,
+                                         holding_bonus_rate=holding_bonus_rate,
+                                         holding_bonus_interval=holding_bonus_interval)
         self.num_steps        = self.config["simulation"]["steps"]
 
         for agent in self.agents:
@@ -32,7 +40,7 @@ class Simulation:
 
     def _step(self) -> None:
         self.bankrupt_agents = []
-        for agent in list(self.agents):       
+        for agent in list(self.agents):
             if agent.is_bankrupt(self.exchange):
                 self.log.append(
                     f"Agent {agent.agent_id} went bankrupt at step {self.step}."
@@ -43,27 +51,35 @@ class Simulation:
                 self.agents.remove(agent)
                 continue
 
-            order = agent.decide(self.exchange)
-            if order:
+            # Change 3: decide() now returns list[Order]; submit each one
+            orders = agent.decide(self.exchange)
+            for order in orders:
                 self.exchange.submit_order(order)
             agent.record_wealth(self.exchange)
 
-        trades = self.exchange.run_step()
-        self._log_step(trades)
+        trades, earnings_events = self.exchange.run_step()
+        self._log_step(trades, earnings_events)
         self.step += 1
 
-    def _log_step(self, trades: list[models.Trade]) -> None:
+    def _log_step(self, trades: list[models.Trade],
+                  earnings_events: list = None) -> None:
         self.log.append({
             "step":         self.step,
             "prices":       {sym: stock.price
                              for sym, stock in self.exchange.order_book.stocks.items()},
             "trade_count":  len(trades),
             "bankruptcies": {a.agent_id for a in self.bankrupt_agents},
-            "top_agents":   sorted(
-                                self.agents,
-                                key=lambda a: a.get_total_wealth(self.exchange),
-                                reverse=True,
-                            )[:5],
+            "earnings":     earnings_events or [],
+            "top_agents":   [
+                                {"agent_id": a.agent_id,
+                                 "agent_type": a.agent_type.value,
+                                 "wealth": a.get_total_wealth(self.exchange)}
+                                for a in sorted(
+                                    self.agents,
+                                    key=lambda a: a.get_total_wealth(self.exchange),
+                                    reverse=True,
+                                )[:5]
+                            ],
         })
 
 

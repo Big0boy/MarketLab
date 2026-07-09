@@ -1,23 +1,56 @@
 simulation:
-  steps:         10000
-  random_seed:   696969
-  starting_cash: 50000.0
+  steps:                 1000
+  random_seed:           696969696969696966666969999967
+  starting_cash:         50000.0
+  max_short_pct:         0.10
+  intraday_steps:        390
+  holding_bonus_rate:    0.0002
+  holding_bonus_interval: 30
 
 stocks:
-  - symbol:            AAPL
-    start_price:       150.0
-    fundamental_value: 145.0
-    volatility:        0.02
+  - symbol:               AAPL
+    start_price:          150.0
+    fundamental_value:    145.0
+    volatility:           0.02
+    borrow_rate:          0.0001
+    total_shares:         1000000
+    tick_size:            0.05
+    adv:                  1000.0
+    earnings_interval:    90
+    earnings_surprise_vol: 0.06
 
-  - symbol:            GOOGL
-    start_price:       130.0
-    fundamental_value: 128.0
-    volatility:        0.025
+  - symbol:               GOOGL
+    start_price:          130.0
+    fundamental_value:    128.0
+    volatility:           0.025
+    borrow_rate:          0.0001
+    total_shares:         1000000
+    tick_size:            0.05
+    adv:                  1000.0
+    earnings_interval:    90
+    earnings_surprise_vol: 0.07
 
-  - symbol:            MSFT
-    start_price:       310.0
-    fundamental_value: 305.0
-    volatility:        0.018
+  - symbol:               MSFT
+    start_price:          310.0
+    fundamental_value:    305.0
+    volatility:           0.018
+    borrow_rate:          0.0001
+    total_shares:         1000000
+    tick_size:            0.05
+    adv:                  1000.0
+    earnings_interval:    90
+    earnings_surprise_vol: 0.05
+
+  - symbol:               NVDA
+    start_price:          78.00
+    fundamental_value:    130.00
+    volatility:           0.035
+    borrow_rate:          0.0008
+    total_shares:         500000
+    tick_size:            0.05
+    adv:                  800.0
+    earnings_interval:    90
+    earnings_surprise_vol: 0.10
 
 market:
   slippage_factor:      0.0001
@@ -26,45 +59,66 @@ market:
 
 agents:
   fundamentalist:
-    count:          12
-    buy_threshold:  0.98  
-    sell_threshold: 1.02   
-    risk_aversion:  1.0
+    count:              12
+    buy_threshold:      0.97   # was 0.98 — act on smaller mispricings
+    sell_threshold:     1.03   # was 1.02
+    risk_aversion:      1.0
+    cash_preference:    0.60   # was 0.85 — deploy more capital
+    max_ownership_pct:  0.30
+    belief_noise:       0.05
+    learning_rate:      0.30
+    signal_sensitivity: 1.0
 
   chartist:
-    count:         12
-    lookback:       5
-    risk_aversion:  1.2
+    count:             12
+    lookback:           5
+    risk_aversion:      1.2
+    cash_preference:    0.55   # was 0.80
+    max_ownership_pct:  0.22
 
   noise:
-    count:         16
-    hold_prob:     0.40    
-    buy_prob:      0.30    
-    risk_aversion: 2.0
+    count:             16
+    hold_prob:         0.40    # already good — kept
+    buy_prob:          0.50    # was 0.30 — more buy orders, better crossing chance
+    risk_aversion:     2.0
+    cash_preference:   0.50   # was 0.75
+    max_ownership_pct: 0.15
 
   market_maker:
-    count:         10
-    spread_pct:    0.004   
-    risk_aversion: 0.5
+    count:             10
+    spread_pct:        0.003   # was 0.004 — tighter spread = more crosses
+    risk_aversion:     0.5
+    cash_preference:   0.30   # was 0.60 — MMs should be deploying capital aggressively
+    max_ownership_pct: 0.15
+    target_inventory:  0
 
   momentum:
-    count: 8
-    lookback: 10
-    threshold: 0.005
-    risk_aversion: 1.5
+    count:             8
+    lookback:          10
+    threshold:         0.003   # was 0.005 — fire on smaller moves
+    risk_aversion:     1.5
+    cash_preference:   0.55   # was 0.80
+    max_ownership_pct: 0.22
 
   mean_reversion:
-    count: 8
-    lookback: 20
-    entry_z: 0.01
-    risk_aversion: 1.2
+    count:             8
+    lookback:          20
+    entry_z:           0.008   # was 0.01 — enter on smaller z-score deviations
+    risk_aversion:     1.2
+    cash_preference:   0.55   # was 0.80
+    max_ownership_pct: 0.22
 
   herd:
-    count: 6
-    sensitivity: 1.0
-    risk_aversion: 1.8
+    count:             6
+    sensitivity:       1.0
+    risk_aversion:     1.8
+    cash_preference:   0.60   # was 0.85
+    max_ownership_pct: 0.15
 
   arbitrage:
-    count: 6
-    threshold: 0.01
-    risk_aversion: 0.8
+    count:             6
+    lookback:          90
+    threshold:         0.008   # was 0.01 — act on smaller spreads
+    risk_aversion:     0.8
+    cash_preference:   0.55   # was 0.80
+    max_ownership_pct: 0.22

@@ -108,13 +108,28 @@ def _starting_holdings(config: dict, starting_cash: float) -> dict:
     Mirrors loader.build_agents:
       half of starting_cash as cash (already set on agent),
       the other half spread evenly across stocks as shares.
+    Also applies the same per-agent float cap as loader.build_agents to
+    prevent evolved/cloned agents from receiving more shares than exist.
     """
-    stocks = config["stocks"]
-    per_stock_value = (starting_cash * 0.5) / len(stocks)
-    return {
-        s["symbol"]: int(per_stock_value / s["start_price"])
-        for s in stocks
-    }
+    stocks_cfg = config["stocks"]
+    per_stock_value = (starting_cash * 0.5) / len(stocks_cfg)
+
+    # Total agent count — needed to cap holdings at float / n_agents
+    total_agent_count = sum(
+        config["agents"][k]["count"]
+        for k in ("fundamentalist", "chartist", "noise", "market_maker",
+                  "momentum", "mean_reversion", "herd", "arbitrage")
+    )
+    total_agent_count = max(1, total_agent_count)
+
+    holdings = {}
+    for s in stocks_cfg:
+        price        = s["start_price"]
+        qty          = int(per_stock_value / price)
+        total_float  = s.get("total_shares", 1_000_000)
+        max_per_agent = total_float // total_agent_count
+        holdings[s["symbol"]] = min(qty, max_per_agent)
+    return holdings
 
 
 # ── Selection & reproduction ──────────────────────────────────────────────────
@@ -140,9 +155,6 @@ def select_and_reproduce(sim: Simulation) -> list:
     }
 
     original_ids_by_type: dict = defaultdict(list)
-    for agent_type, target_n in type_cfg.items():
-        pass  # filled below from the full original id range
-
     # Reconstruct original id ranges from config counts in insertion order
     agent_id = 0
     for agent_type in [FundamentalistAgent, ChartistAgent, NoiseAgent, MarketMakerAgent,
